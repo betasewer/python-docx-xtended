@@ -1,0 +1,8 @@
+include LICENSE
+exclude README.rst
+exclude HISTORY.rst
+include requirements.txt
+include test-requirements.txt
+exclude how-to-customize-python-docx.txt
+exclude dist.ps1
+exclude MANIFEST.in
