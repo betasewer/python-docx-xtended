@@ -157,12 +157,22 @@ class CT_SectPr(BaseOxmlElement):
         return matching_headerReferences[0]
 
     @property
-    def grid_lines(self):
+    def grid_charspace(self):
+        grid = self.docGrid
+        return grid.charSpace if grid is not None else None
+    
+    @grid_charspace.setter
+    def grid_charspace(self, value):
+        grid = self.get_or_add_docGrid()
+        grid.charSpace = value
+
+    @property
+    def grid_linepitch(self):
         grid = self.docGrid
         return grid.linePitch if grid is not None else None
     
-    @grid_lines.setter
-    def grid_lines(self, value):
+    @grid_linepitch.setter
+    def grid_linepitch(self, value):
         grid = self.get_or_add_docGrid()
         grid.linePitch = value
         
@@ -176,16 +186,6 @@ class CT_SectPr(BaseOxmlElement):
         grid = self.get_or_add_docGrid()
         grid.type = value
     
-    @property
-    def grid_chars(self):
-        grid = self.docGrid
-        return grid.charSpace if grid is not None else None
-    
-    @grid_chars.setter
-    def grid_chars(self, value):
-        grid = self.get_or_add_docGrid()
-        grid.charSpace = value
-
     @property
     def gutter(self):
         """
@@ -346,13 +346,13 @@ class CT_SectPr(BaseOxmlElement):
 
     @property
     def text_direction(self):
-        dir = self.textDirection
-        return dir.val if dir else None
+        dire = self.textDirection
+        return dire.val if dire is not None else None
     
     @text_direction.setter
     def text_direction(self, value):
-        dir = self.get_or_add_textDirection()
-        dir.val = value
+        dire = self.get_or_add_textDirection()
+        dire.val = value
         
     @property
     def titlePg_val(self):

@@ -45,6 +45,10 @@ class Run(Parented):
             br.type = type_
         if clear is not None:
             br.clear = clear
+    
+    # 適当な実装
+    def get_breaks(self):
+        return [(x.type, x.clear) for x in self._r.br_lst]
 
     def add_picture(self, image_path_or_stream, width=None, height=None):
         """

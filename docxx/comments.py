@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 """
-Styles object, container for all objects in the styles part.
+comments
 """
 
 from __future__ import (

@@ -8,7 +8,7 @@ from collections.abc import Sequence
 
 from docxx.blkcntnr import BlockItemContainer
 from docxx.enum.section import WD_HEADER_FOOTER
-from docxx.shared import lazyproperty
+from docxx.shared import lazyproperty, Pt, Emu, Twips
 from docxx.oxml.simpletypes import ST_DocGrid
 
 class Sections(Sequence):
@@ -60,6 +60,14 @@ class Section(object):
     @bottom_margin.setter
     def bottom_margin(self, value):
         self._sectPr.bottom_margin = value
+    
+    @property
+    def content_width(self):
+        return Emu(self.page_width - (self.left_margin + self.right_margin + self.gutter))
+        
+    @property
+    def content_height(self):
+        return Emu(self.page_height - (self.top_margin + self.bottom_margin)) 
 
     @property
     def different_first_page_header_footer(self):
@@ -131,6 +139,45 @@ class Section(object):
     @footer_distance.setter
     def footer_distance(self, value):
         self._sectPr.footer = value
+
+    # 文字詰めと行詰めを計算する
+    def get_grid_dimension(self, basic_font_size=Pt(10.5)):
+        # 縦書き限定？
+        if self.grid_charspace is not None:
+            charpitchpt = basic_font_size + Pt(self.grid_charspace / 4096)
+            chars = round(self.content_height / charpitchpt)
+        else:
+            chars = None
+        if self.grid_linepitch is not None:
+            linepitchpt = Twips(self.grid_linepitch)
+            lines = round(self.content_width / linepitchpt)
+        else:
+            lines = None
+        return chars, lines
+
+    @property
+    def grid_charspace(self):
+        return self._sectPr.grid_charspace
+    
+    @grid_charspace.setter
+    def grid_charspace(self, value):
+        self._sectPr.grid_charspace = value
+
+    @property
+    def grid_linepitch(self):
+        return self._sectPr.grid_linepitch
+    
+    @grid_linepitch.setter
+    def grid_linepitch(self, value):
+        self._sectPr.grid_linepitch = value
+        
+    @property
+    def grid_type(self):
+        return self._sectPr.grid_type
+    
+    @grid_type.setter
+    def grid_type(self, value):
+        self._sectPr.grid_type = value
 
     @property
     def gutter(self):
@@ -247,6 +294,14 @@ class Section(object):
     def start_type(self, value):
         self._sectPr.start_type = value
 
+    @property
+    def text_direction(self):
+        return self._sectPr.text_direction
+    
+    @text_direction.setter
+    def text_direction(self, value):
+        self._sectPr.text_direction = value
+        
     @property
     def top_margin(self):
         """

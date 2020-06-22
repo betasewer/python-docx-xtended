@@ -198,14 +198,18 @@ class ParagraphContentType(object):
             return None
         
     @classmethod
-    def Define(cls, tagname, *names):
-        typecode = len(cls._content_names)
-        cls._content_names.append(tagname)
-        for name in names:
-            cls._names_map[name] = typecode
+    def Define(cls, *entries):
+        for names in entries:
+            tagname = names[0]
+            typecode = len(cls._content_names)
+            cls._content_names.append(tagname)
+            for name in names:
+                cls._names_map[name] = typecode
     
-ParagraphContentType.Define("r", "run")
-ParagraphContentType.Define("commentRangeStart")
-ParagraphContentType.Define("commentRangeEnd")
-ParagraphContentType.Define("hyperlink")
+ParagraphContentType.Define(
+    ("r", "run"),
+    ("commentRangeStart",),
+    ("commentRangeEnd",),
+    ("hyperlink",)
+)
 delattr(ParagraphContentType, "Define")

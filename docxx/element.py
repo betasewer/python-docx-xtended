@@ -104,18 +104,18 @@ class query():
     def __init__(self, *args, **kwargs):
         top = args[0] if len(args)>0 else None
         if etree.iselement(top):
-            q = lambda x: query.is_(x, top)
+            q = lambda x: query.match_same(x, top)
         else:
-            q = lambda x: query.tag(x, *args, **kwargs)
+            q = lambda x: query.match_tag(x, *args, **kwargs)
         self._q = q
         self._sign = True
         
     @classmethod
-    def tag(cls, obj, *names, **attrs):
+    def match_tag(cls, obj, *names, **attrs):
         return any(match_element(obj, name, **attrs) for name in names)
     
     @classmethod
-    def is_(cls, obj, right):
+    def match_same(cls, obj, right):
         return get_element(obj) is get_element(right)
     
     @property
