@@ -35,7 +35,7 @@ def get_element(proxy_or_element):
         raise ValueError("No element related")
 
 # 要素の子を取り除く
-def remove_element(parent, if_=None):
+def remove_element(parent, if_=None, all=False):
     if parent is None:
         return False
     rm=False
@@ -96,17 +96,16 @@ def match_element(element, name, **attrs):
 
 class query():
     """
-    query(lxml.etree.element): 
+    ElementChildren(p, lxml.etree.element): 
         element と同一オブジェクトかを判定
-    query("tagnames"..., "attrname"="arttrval"...):
+    ElementChildren(p, "tagnames", ... "attrname"="arttrval", ...):
         tagnamesのうちいずれか一つのタグ名を持ち、全てのattrname=attrvalが成立するかを判定
     """
-    def __init__(self, *args, **kwargs):
-        top = args[0] if len(args)>0 else None
-        if etree.iselement(top):
-            q = lambda x: query.match_same(x, top)
+    def __init__(self, toparg, *args, **kwargs):
+        if isinstance(toparg, str):
+            q = lambda x: query.match_tag(x, toparg, *args, **kwargs)
         else:
-            q = lambda x: query.match_tag(x, *args, **kwargs)
+            q = lambda x: query.match_same(x, toparg)
         self._q = q
         self._sign = True
         
@@ -125,6 +124,88 @@ class query():
     
     def __call__(self, obj):
         return self._q(obj) == self._sign
+
+
+class ElementChildren():
+    """
+    ElementChildren(p, lxml.etree.element): 
+        element と同一オブジェクトかを判定
+    ElementChildren(p, "tagnames"..., "attrname"="arttrval"...):
+        tagnamesのうちいずれか一つのタグ名を持ち、全てのattrname=attrvalが成立するかを判定
+    """
+    def __init__(self, parent, *args, **kwargs):
+        self._parent = get_element(parent)
+        top = args[0] if len(args)>0 else None
+        if etree.iselement(top):
+            q = lambda x: ElementChildren.match_same(x, top)
+            one = True
+        else:
+            q = lambda x: ElementChildren.match_tag(x, *args, **kwargs)
+            one = False
+        self._q = q
+        self._sign = True
+        self._one = kwargs.setdefault("one", one)
+        
+    @classmethod
+    def match_tag(cls, obj, *names, **attrs):
+        return any(match_element(obj, name, **attrs) for name in names)
+    
+    @classmethod
+    def match_same(cls, obj, right):
+        return get_element(obj) is get_element(right)
+    
+    @property
+    def not_(self):
+        self._sign = False
+        return self
+    
+    def match(self, elem):
+        return self._q(elem) == self._sign
+
+    #
+    # 子の中から要素を探す
+    #
+    def get_parent(self):
+        return self._parent
+
+    def children(self):
+        if self._parent is None:
+            return None
+        for child in get_element(self._parent):
+            if self._q is self._q(child):
+                yield child
+                if self._one:
+                    break
+
+    def find(self):
+        return next(self.children(), None)
+
+    # 要素の子を取り除く
+    def remove(self):
+        rm=False
+        for child in list(self.children()):
+            self._parent.remove(child)
+            rm=True
+        return rm
+    
+    # 要素から子を取り除き、ほかの要素に追加する
+    def move_to(self, destparent):
+        if None in (self._parent, destparent):
+            return False
+        destparent = get_element(destparent)
+        for child in self.children():
+            destparent.append(child)
+        return True
+
+    # 元要素を残す
+    def copy_to(self, destparent):
+        if None in (self._parent, destparent):
+            return False
+        destparent = get_element(destparent)
+        for child in self.children():
+            child = deepcopy(child)
+            destparent.append(child)
+        return True
 
         
 # 要素を複製して前方に挿入
