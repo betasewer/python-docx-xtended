@@ -239,3 +239,26 @@ class XmlPart(Part):
         chain of delegation ends here for child objects.
         """
         return self
+
+
+
+def copy_part(srcp, destp, destpackage):
+    """ /xtended
+    パーツ／パッケージを子のパーツごとコピーする。
+    コピー先のパーツの元の構造は置き換えられる。
+    """
+    def _copy_rels(src, dest):
+        for srcrel in src.rels.values():
+            if srcrel.is_external:
+                continue
+            srcpart = srcrel.target_part
+            if hasattr(srcpart, "_element"):
+                element = parse_xml(srcpart._element.xml)
+            else:
+                element = srcpart.blob
+            newpart = type(srcpart)(srcpart.partname, srcpart.content_type, element, destpackage)
+            # 名前はaddだが内部では代入している
+            dest.rels.add_relationship(srcrel.reltype, newpart, srcrel.rId, srcrel.is_external)
+            if not srcrel.is_external:
+                _copy_rels(srcrel.target_part, newpart)
+    _copy_rels(srcp, destp)

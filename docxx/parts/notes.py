@@ -14,7 +14,6 @@ from docxx.opc.part import XmlPart
 from docxx.oxml import parse_xml
 from docxx.notes import Endnotes, Footnotes
 
-
 class EndnotesPart(XmlPart):
     """
     Proxy for the endnotes.xml part
@@ -36,7 +35,7 @@ class EndnotesPart(XmlPart):
         The |_Styles| instance containing the styles (<w:style> element
         proxies) for this styles part.
         """
-        return Endnotes(self._element)
+        return Endnotes(self._element, self)
         
     @classmethod
     def _default_xml(cls):
@@ -44,6 +43,13 @@ class EndnotesPart(XmlPart):
         Return a bytestream containing XML for a default styles part.
         """
         return ""
+    
+    @property
+    def part(self):
+        """
+        DocumentPartへと転送する。
+        """
+        return self._package.main_document_part
 
         
 class FootnotesPart(XmlPart):
@@ -67,7 +73,7 @@ class FootnotesPart(XmlPart):
         The |_Styles| instance containing the styles (<w:style> element
         proxies) for this styles part.
         """
-        return Footnotes(self._element)
+        return Footnotes(self._element, self)
         
     @classmethod
     def _default_xml(cls):
@@ -75,3 +81,10 @@ class FootnotesPart(XmlPart):
         Return a bytestream containing XML for a default styles part.
         """
         return ""
+    
+    @property
+    def part(self):
+        """
+        DocumentPartへと転送する。
+        """
+        return self._package.main_document_part

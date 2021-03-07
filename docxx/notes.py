@@ -26,7 +26,7 @@ class Footnotes(ElementProxy):
         
 class Note(ElementProxy):    
     def __init__(self, r, parent):
-        super().__init__(r)
+        super().__init__(r, parent=parent)
         self.__note = None
         
     @property

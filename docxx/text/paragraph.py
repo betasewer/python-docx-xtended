@@ -157,7 +157,7 @@ class Paragraph(Parented):
             else:
                 co = child
             yield (ct, co)
-            
+
     # 所定の位置にランの集合を追加する
     def insert_runs(self, runs, last_run=None):
         for run in runs:

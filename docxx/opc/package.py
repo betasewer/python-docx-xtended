@@ -200,7 +200,7 @@ class Unmarshaller(object):
         )
         Unmarshaller._unmarshal_relationships(pkg_reader, package, parts)
         for part in parts.values():
-            part.after_unmarshal() # partsにはcontent_typesに記載の全種がある
+            part.after_unmarshal()
         package.after_unmarshal()
 
     @staticmethod

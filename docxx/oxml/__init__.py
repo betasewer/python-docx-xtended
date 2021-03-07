@@ -9,7 +9,7 @@ from __future__ import absolute_import
 
 from lxml import etree
 
-from .ns import NamespacePrefixedTag, nsmap
+from .ns import NamespacePrefixedTag, nsmap, pfxmap
 
 
 # configure XML parser
@@ -58,6 +58,15 @@ def OxmlElement(nsptag_str, attrs=None, nsdecls=None):
     return oxml_parser.makeelement(
         nsptag.clark_name, attrib=attrs, nsmap=nsdecls
     )
+
+
+def extend_nsmap(newnsmap):
+    """ /xt
+    namespaceを追加する。
+    """
+    nsmap.update(newnsmap)
+    newpfxmap = {v:k for k,v in newnsmap.items()}
+    pfxmap.update(newpfxmap)
 
 
 # ===========================================================================

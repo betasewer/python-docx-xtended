@@ -3,7 +3,7 @@
 """
 RunsView, Runs
 """
-
+from typing import List, Optional, Any
 from docxx.text.run import Run, same_run, clone_run
 
 #
@@ -83,7 +83,7 @@ class RunRange():
         return self._runlist.runs(self.begin, self.end)
         
     # 対象内のランをコピーしてリストを返す
-    def clones(self):
+    def clones(self) -> List[Run]:
         copied = []
         for srcrun in self.runs():
             copied.append(clone_run(srcrun))

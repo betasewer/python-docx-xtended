@@ -227,6 +227,13 @@ class Run(Parented):
     def underline(self, value):
         self.font.underline = value
 
+    #
+    def clone(self, **kwargs):
+        return clone_run(self, **kwargs)
+    
+    def is_same(self, right):
+        return same_run(self, right)
+
 
 class _Text(object):
     """
