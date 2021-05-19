@@ -12,13 +12,19 @@ def filetext(path):
         text = fi.read()
     return text
         
+def getversion(text):
+    m = re.search("__version__\\s+=\\s+'([^']+)'", text)
+    if m:
+        return m.group(1)
+    raise ValueError("バージョン番号がありません")
+
 #
 #
 #
 package_name = "python-docx-xtended"
 
-version = re.search("__version__\\s+=\\s+'([^']+)'", filetext("docxx/__init__.py")).group(1)
-licence = filetext("LICENSE")
+version = getversion(filetext("docxx/__init__.py"))
+license = filetext("LICENSE")
 requirements = [x.strip() for x in filetext("REQUIREMENTS.txt").splitlines()]
 test_requirements = [x.strip() for x in filetext("TEST-REQUIREMENTS.txt").splitlines()]
 long_description = filetext("README.rst") + "\n" + filetext("HISTORY.rst")
