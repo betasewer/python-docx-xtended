@@ -6,11 +6,11 @@ corresponding to Open XML elements.
 """
 
 from __future__ import absolute_import
+import sys
 
 from lxml import etree
 
 from .ns import NamespacePrefixedTag, nsmap, pfxmap
-
 
 # configure XML parser
 element_class_lookup = etree.ElementNamespaceClassLookup()

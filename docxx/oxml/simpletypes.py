@@ -170,6 +170,18 @@ class XsdId(BaseStringType):
     pass
 
 
+class XsdByte(BaseIntType):
+
+    @classmethod
+    def validate(cls, value):
+        cls.validate_int_in_range(value, -128, 127)
+
+class XsdShort(BaseIntType):
+
+    @classmethod
+    def validate(cls, value):
+        cls.validate_int_in_range(value, -32768, 32767)
+
 class XsdInt(BaseIntType):
 
     @classmethod
@@ -195,6 +207,14 @@ class XsdStringEnumeration(BaseStringEnumerationType):
     Set of enumerated xsd:string values.
     """
 
+class XsdHexBinary(BaseStringType):
+    """
+    hexadecimal value
+    TODO:
+        validate
+    """
+    pass
+
 
 class XsdToken(BaseStringType):
     """
@@ -207,8 +227,13 @@ class XsdUnsignedByte(BaseIntType):
 
     @classmethod
     def validate(cls, value):
-        cls.validate_int_in_range(value, 0, 65535)
+        cls.validate_int_in_range(value, 0, 255)
 
+class XsdUnsignedShort(BaseIntType):
+
+    @classmethod
+    def validate(cls, value):
+        cls.validate_int_in_range(value, 0, 65535)
 
 class XsdUnsignedInt(BaseIntType):
 
