@@ -38,10 +38,11 @@ def get_element(proxy_or_element):
 def remove_element(parent, if_=None, all=False):
     if parent is None:
         return False
+    pa=get_element(parent)
     rm=False
-    for child in get_element(parent):
+    for child in pa:
         if if_ is None or if_(child):
-            parent.remove(child)
+            pa.remove(child)
             rm=True
     return rm
 
