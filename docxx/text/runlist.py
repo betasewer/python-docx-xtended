@@ -135,7 +135,7 @@ class RunList():
         return self._parent._element.r_lst
         
     def _makerun(self, elem):
-        return Run(elem, self._parent._element)
+        return Run(elem, self._parent)
         
     def _addrun(self, text):    
         return self._runadder(self._parent, text)
@@ -307,6 +307,53 @@ class RunList():
             keyval = curkeyval
         yield keyval, self.range(curbeg, range.end)
     
+    def runs_separations_break(self, breaks):
+        """
+        与えられた位置でランを区切って返す
+        Params:
+            breaks(Sequence[Tuple[Run, Int]]): 区切り位置を示す[ラン、テキストインデックス]の組のリスト
+        Returns:
+            RunRange: 区切りが発生した範囲
+        """
+        runbreaks = {}
+        for brkrun, brkpos in breaks:
+            key = id(brkrun)
+            if key not in runbreaks:
+                runbreaks[key] = [brkrun, []]
+            runbreaks[key][1].append(brkpos)
+        
+        newruns = []
+        for brkrun, brkposlist in runbreaks.values():
+            text = brkrun.text
+            if not brkposlist:
+                continue
+            newtextfirst = text[0:brkposlist[0]]
+
+            # テキストを分割する
+            newtextothers = []
+            lastpos = brkposlist[0]
+            for brkpos in brkposlist[1:]:
+                newtextothers.append(text[lastpos:brkpos])
+                lastpos = brkpos
+            newtextothers.append(text[lastpos:])
+
+            # 前のランのテキストを縮める
+            brkrun.text = newtextfirst
+            newruns.append(brkrun)
+
+            # 新しいランを後ろに追加する
+            ptrun = brkrun
+            for newtext in newtextothers:
+                newrun = clone_run(ptrun) # 前のランを複製
+                newrun.text = newtext
+                self.insert_run_next(ptrun, newrun)
+                newruns.append(newrun)
+                ptrun = newrun
+
+        if not newruns:
+            return None
+        return self.range(newruns[0], self.get_next_run(newruns[-1]))
+
     #
     # テキスト操作（複数ランにまたがっている場合に対応）
     #
@@ -434,6 +481,7 @@ class RunList():
     
     # 文字列を置き換える
     def replace_placeholders(self, placeholder, *args, range=None):
+        newruns = []
         argitr = iter(args)
         for run in self.separate(placeholder, range=range):
             if run.text == placeholder:
@@ -444,11 +492,16 @@ class RunList():
                 if isinstance(arg, str):
                     run.text = arg
                 elif isinstance(arg, Run):
-                    self.insert_run_next(run, clone_run(arg))
+                    newrun = clone_run(arg)
+                    self.insert_run_next(run, newrun)
                     self.remove(run)
+                    run = newrun
                 else:
                     run.text = str(arg)
-        return self
+            newruns.append(run)
+        if not newruns:
+            return None
+        return RunRange(self, newruns[0], self.get_next_run(newruns[-1]))
     
     @property
     def text(self):
