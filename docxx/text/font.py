@@ -56,7 +56,36 @@ class EmFormat(ElementProxy):
         if rPr is None:
             return None
         return rPr.em
+        
+class CombineFormat(ElementProxy):
+    """ 
+    Provides access to <w:eastAsianLayout><w:combine, w:combineBrackets>
+    brackets:
+        none	No Enclosing Brackets  なし
+        round	Round Brackets   (　　)
+        square	Square Brackets  [　　]
+        angle	Angle Brackets   〈　　〉
+        curly	Curly Brackets   {　　}
+    """
+    def __init__(self, rPr_parent):
+        super().__init__(rPr_parent)
+    
+    @property
+    def on(self):
+        return _get_eal_value(self._element, "combine", False)
+        
+    @on.setter
+    def on(self, value):
+        _set_eal_value(self._element, "combine", bool(value))
+            
+    @property
+    def brackets(self):
+        return _get_eal_value(self._element, "combineBrackets", None)
 
+    @brackets.setter
+    def brackets(self, value):
+        _set_eal_value(self._element, "combineBrackets", value)
+        
 
 class Font(ElementProxy):
     """
@@ -97,6 +126,14 @@ class Font(ElementProxy):
         """
         return ColorFormat(self._element)
 
+    @property
+    def combine(self):
+        return CombineFormat(self._element)
+    
+    @combine.setter
+    def combine(self, value):
+        CombineFormat(self._element).on = value
+    
     @property
     def complex_script(self):
         """
@@ -152,8 +189,12 @@ class Font(ElementProxy):
     
     @em.setter
     def em(self, value):
-        self.em.character = 'comma'
-
+        if bool(value):
+            self.em.character = 'comma'
+        else:
+            rPr = self._element.get_or_add_rPr()
+            rPr._remove_em()
+    
     @property
     def emboss(self):
         """
@@ -251,7 +292,7 @@ class Font(ElementProxy):
         rPr.rFonts_ascii = value
         rPr.rFonts_hAnsi = value
         rPr.rFonts_hint  = "default"
-
+    
     @property
     def eastasianame(self):
         rPr = self._element.rPr
@@ -455,6 +496,14 @@ class Font(ElementProxy):
     def underline(self, value):
         rPr = self._element.get_or_add_rPr()
         rPr.u_val = value
+    
+    @property
+    def vertical(self):
+        return _get_eal_value(self._element, "vert", False)
+
+    @vertical.setter
+    def vertical(self, value):
+        _set_eal_value(self._element, "vert", bool(value))
 
     @property
     def web_hidden(self):
@@ -484,3 +533,18 @@ class Font(ElementProxy):
         """
         rPr = self._element.get_or_add_rPr()
         rPr._set_bool_val(name, value)
+
+#
+def _get_eal_value(run, name, default):
+    rPr = run.rPr
+    if rPr is None:
+        return default
+    eal = rPr.eastAsianLayout
+    if eal is None:
+        return default
+    return getattr(eal, name, default)
+
+def _set_eal_value(run, name, value):
+    rPr = run.get_or_add_rPr()
+    eal = rPr.get_or_add_eastAsianLayout()
+    setattr(eal, name, value)

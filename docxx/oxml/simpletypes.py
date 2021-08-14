@@ -280,6 +280,18 @@ class ST_BrType(XsdString):
             )
 
 
+class ST_CombineBrackets(XsdStringEnumeration):
+    """
+    """
+    NONE = 'none'
+    ROUND = 'round'
+    SQUARE = 'square'
+    ANGLE = 'angle'
+    CURLY = 'curly'
+
+    _members = (NONE, ROUND, SQUARE, ANGLE, CURLY)
+
+
 class ST_Coordinate(BaseIntType):
 
     @classmethod

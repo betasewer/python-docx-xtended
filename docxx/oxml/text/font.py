@@ -10,7 +10,7 @@ from docxx.enum.text import WD_COLOR, WD_UNDERLINE
 from docxx.oxml.ns import nsdecls, qn
 from docxx.oxml.simpletypes import (
     ST_HexColor, ST_HpsMeasure, ST_String, ST_VerticalAlignRun
-    , ST_Em, ST_TextEffect, ST_Hint
+    , ST_Em, ST_TextEffect, ST_Hint, ST_OnOff, ST_CombineBrackets, ST_DecimalNumber
 )
 from docxx.oxml.xmlchemy import (
     BaseOxmlElement, OptionalAttribute, RequiredAttribute, ZeroOrOne
@@ -42,6 +42,16 @@ class CT_Highlight(BaseOxmlElement):
     """
     val = RequiredAttribute('w:val', WD_COLOR)
 
+class CT_EastAsianLayout(BaseOxmlElement):
+    """
+    `w:eastAsianLayout`
+    """
+    id = OptionalAttribute('w:id',  ST_DecimalNumber)
+    combine = OptionalAttribute('w:combine',  ST_OnOff)
+    combineBrackets = OptionalAttribute('w:combineBrackets',  ST_CombineBrackets)
+    vert = OptionalAttribute('w:vert',  ST_OnOff)
+    vertCompress = OptionalAttribute('w:vertCompress',  ST_OnOff)
+    
 
 class CT_Em(BaseOxmlElement):
     """
@@ -312,7 +322,7 @@ class CT_RPr(BaseOxmlElement):
         self._remove_u()
         if value is not None:
             self._add_u().val = value
-
+    
     def _get_bool_val(self, name):
         """
         Return the value of the boolean child element having *name*, e.g.
@@ -374,4 +384,5 @@ class CT_TextEffect(BaseOxmlElement):
     `w:em` element
     """
     val = RequiredAttribute('w:val', ST_TextEffect) # ST_Em
-    
+
+

@@ -205,6 +205,7 @@ register_element_cls('w:vMerge',     CT_VMerge)
 
 from .text.font import (  # noqa
     CT_Color,
+    CT_EastAsianLayout,
     CT_Em, 
     CT_Fonts,
     CT_Highlight,
@@ -220,6 +221,7 @@ register_element_cls('w:caps',       CT_OnOff)
 register_element_cls('w:color',      CT_Color)
 register_element_cls('w:cs',         CT_OnOff)
 register_element_cls('w:dstrike',    CT_OnOff)
+register_element_cls('w:eastAsianLayout', CT_EastAsianLayout)      #
 register_element_cls('w:em',         CT_Em)      #
 register_element_cls('w:emboss',     CT_OnOff)
 register_element_cls('w:effect',     CT_TextEffect)

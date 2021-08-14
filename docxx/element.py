@@ -97,10 +97,10 @@ def match_element(element, name, **attrs):
 
 class query():
     """
-    ElementChildren(p, lxml.etree.element): 
+    query(lxml.etree.element): 
         element と同一オブジェクトかを判定
-    ElementChildren(p, "tagnames", ... "attrname"="arttrval", ...):
-        tagnamesのうちいずれか一つのタグ名を持ち、全てのattrname=attrvalが成立するかを判定
+    query("tagname1", "tagname2" ... "attrname"="arttrval", ...):
+        tagname1, 2...のうちいずれか一つのタグ名を持ち、全てのattrname=attrval...が成立するかを判定
     """
     def __init__(self, toparg, *args, **kwargs):
         if isinstance(toparg, str):
@@ -242,6 +242,8 @@ class namespaces:
         return qname
     
     def qname(self, name):
+        if ":" not in name:
+            raise ValueError("Specify namespace: '{}'".format(name))
         pfx, localname = name.split(":")
         uri = self.nsmap.get(pfx, "")
         return '{%s}%s' % (uri, localname)
