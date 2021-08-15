@@ -102,6 +102,23 @@ class CT_Inline(BaseOxmlElement):
         )
 
 
+class CT_Anchor(BaseOxmlElement):
+    """
+    ``<wp:anchor>`` element, container for a floating shape.
+    """
+    #wp:simplePos [1..1]    Simple Positioning Coordinates
+    #wp:positionH [1..1]    Horizontal Positioning
+    #wp:positionV [1..1]    Vertical Positioning
+    extent = OneAndOnlyOne('wp:extent')
+    docPr = OneAndOnlyOne('wp:docPr')
+    graphic = OneAndOnlyOne('a:graphic')
+    # wp:wrapNone    No Text Wrapping
+    # wp:wrapSquare    Square Wrapping
+    # wp:wrapTight    Tight Wrapping
+    # wp:wrapThrough    Through Wrapping
+    # wp:wrapTopAndBottom    Top and Bottom Wrapping
+
+
 class CT_NonVisualDrawingProps(BaseOxmlElement):
     """
     Used for ``<wp:docPr>`` element, and perhaps others. Specifies the id and
@@ -282,3 +299,8 @@ class CT_Transform2D(BaseOxmlElement):
     def cy(self, value):
         ext = self.get_or_add_ext()
         ext.cy = value
+
+
+    
+    
+    

@@ -131,6 +131,7 @@ from .shape import (  # noqa
     CT_GraphicalObject,
     CT_GraphicalObjectData,
     CT_Inline,
+    CT_Anchor,
     CT_NonVisualDrawingProps,
     CT_Picture,
     CT_PictureNonVisual,
@@ -153,6 +154,7 @@ register_element_cls('pic:spPr',      CT_ShapeProperties)
 register_element_cls('wp:docPr',      CT_NonVisualDrawingProps)
 register_element_cls('wp:extent',     CT_PositiveSize2D)
 register_element_cls('wp:inline',     CT_Inline)
+register_element_cls('wp:anchor',     CT_Anchor)
 
 from .styles import CT_LatentStyles, CT_LsdException, CT_Style, CT_Styles, CT_DocDefaults, CT_PPrDefault, CT_RPrDefault
 register_element_cls('w:basedOn',        CT_String)
@@ -276,6 +278,7 @@ register_element_cls('w:hyperlink',       CT_Hyperlink)
 
 from .text.run import (
     CT_Br, 
+    CT_Drawing,
     CT_FldChar,
     CT_Lang, 
     CT_R, 
@@ -293,6 +296,7 @@ register_element_cls('w:delText',  CT_Text)
 register_element_cls('w:instrText',  CT_Text)
 register_element_cls('w:delInstrText',  CT_Text)
 register_element_cls('w:fldChar',  CT_FldChar)
+register_element_cls('w:drawing',  CT_Drawing)
 
 # ruby
 register_element_cls('w:rubyPr',     CT_RubyPr)

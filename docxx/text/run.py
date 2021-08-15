@@ -9,7 +9,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 from docxx.enum.style import WD_STYLE_TYPE
 from docxx.enum.text import WD_BREAK
 from docxx.text.font import Font
-from docxx.shape import InlineShape
+from docxx.shape import InlineShape, AnchorShape
 from docxx.shared import Parented, ElementProxy, Pt, AlmostSingle
 from copy import deepcopy
 
@@ -66,6 +66,20 @@ class Run(Parented):
         inline = self.part.new_pic_inline(image_path_or_stream, width, height)
         self._r.add_drawing(inline)
         return InlineShape(inline)
+    
+    @property
+    def pictures(self):
+        """
+        Returns:
+            List[AnchorShape|InlineShape]
+        """
+        shapes = []
+        for x in self._r.drawing_lst:
+            if x.anchor is not None:
+                shapes.append(AnchorShape(x.anchor))
+            if x.inline is not None:
+                shapes.append(InlineShape(x.inline))
+        return shapes
 
     def add_tab(self):
         """
@@ -259,6 +273,9 @@ def clone_run(run, **kwargs):
         setattr(r, key, arg)
     return r
 
+#
+#
+#
 class Ruby(ElementProxy):
 
     # rt
@@ -376,4 +393,7 @@ class FieldChar(ElementProxy):
         if v == None:
             return False
         return True
+
+
+
 

@@ -30,7 +30,6 @@ class CT_R(BaseOxmlElement):
     br = ZeroOrMore('w:br')
     cr = ZeroOrMore('w:cr')
     tab = ZeroOrMore('w:tab')
-    drawing = ZeroOrMore('w:drawing')
     ruby = ZeroOrMore('w:ruby')
     
     delText = ZeroOrMore('w:delText')
@@ -47,6 +46,11 @@ class CT_R(BaseOxmlElement):
     softHyphen = ZeroOrOne('w:softHyphen')
     separator = ZeroOrOne('w:separator')
     continuationSeparator = ZeroOrOne('w:continuationSeparator')
+    
+    drawing = ZeroOrMore('w:drawing')
+    pict = ZeroOrMore('w:pict')
+    object = ZeroOrMore('w:object')
+    
     #
     #w:dayShort [0..1]    Date Block - Short Day Format
     #w:monthShort [0..1]    Date Block - Short Month Format
@@ -220,16 +224,28 @@ class CT_RubyContent(BaseOxmlElement):
     r = ZeroOrOne('w:r')
     
 class CT_RubyAlign(BaseOxmlElement):
+    """
+    """
     val = RequiredAttribute('w:val', ST_String) # ST_RubyAlign
 
 class CT_Lang(BaseOxmlElement):
+    """
+    """
     val = RequiredAttribute('w:val', ST_String) # ST_Lang
     
 class CT_FldChar(BaseOxmlElement):
+    """
+    """
     fldCharType = RequiredAttribute('w:fldCharType', ST_String) # ST_FldCharType
     fldLock = OptionalAttribute('w:fldLock', ST_OnOff)
     dirty = OptionalAttribute('w:dirty', ST_OnOff) 
 
+class CT_Drawing(BaseOxmlElement):
+    """
+    ``<w:drawing>`` element.
+    """
+    anchor = ZeroOrOne('wp:anchor')
+    inline = ZeroOrOne('wp:inline')
 
 class _RunContentAppender(object):
     """

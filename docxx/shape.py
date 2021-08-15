@@ -47,27 +47,25 @@ class InlineShapes(Parented):
         return body.xpath(xpath)
 
 
-class InlineShape(object):
+class BasicShape():
     """
-    Proxy for an ``<wp:inline>`` element, representing the container for an
-    inline graphical object.
+    Basic implement of InlineShape and AnchorShape.
     """
-    def __init__(self, inline):
-        super(InlineShape, self).__init__()
-        self._inline = inline
-
+    def __init__(self, element):
+        self._element = element
+        
     @property
     def height(self):
         """
         Read/write. The display height of this inline shape as an |Emu|
         instance.
         """
-        return self._inline.extent.cy
+        return self._element.extent.cy
 
     @height.setter
     def height(self, cy):
-        self._inline.extent.cy = cy
-        self._inline.graphic.graphicData.pic.spPr.cy = cy
+        self._element.extent.cy = cy
+        self._element.graphic.graphicData.pic.spPr.cy = cy
 
     @property
     def type(self):
@@ -76,7 +74,7 @@ class InlineShape(object):
         ``docx.enum.shape.WD_INLINE_SHAPE``, e.g. ``LINKED_PICTURE``.
         Read-only.
         """
-        graphicData = self._inline.graphic.graphicData
+        graphicData = self._element.graphic.graphicData
         uri = graphicData.uri
         if uri == nsmap['pic']:
             blip = graphicData.pic.blipFill.blip
@@ -95,9 +93,41 @@ class InlineShape(object):
         Read/write. The display width of this inline shape as an |Emu|
         instance.
         """
-        return self._inline.extent.cx
+        return self._element.extent.cx
 
     @width.setter
     def width(self, cx):
-        self._inline.extent.cx = cx
-        self._inline.graphic.graphicData.pic.spPr.cx = cx
+        self._element.extent.cx = cx
+        self._element.graphic.graphicData.pic.spPr.cx = cx
+        
+    def get_picture_rId(self):
+        """
+        埋め込み・リンク画像のrelationIdを返す。
+        """
+        t = self.type
+        if t == WD_INLINE_SHAPE.LINKED_PICTURE:
+            return self._element.graphic.graphicData.pic.blipFill.blip.link
+        elif t == WD_INLINE_SHAPE.PICTURE:
+            return self._element.graphic.graphicData.pic.blipFill.blip.embed
+        else:
+            return None
+    
+
+class InlineShape(BasicShape):
+    """
+    Proxy for an ``<wp:inline>`` element, representing the container for an
+    inline graphical object.
+    """
+    def __init__(self, inline):
+        super().__init__(inline)
+
+
+class AnchorShape(BasicShape):
+    """
+    Proxy for an ``<wp:anchor>`` element.
+    """
+    def __init__(self, anchor):
+        super().__init__(anchor)
+        
+
+    
