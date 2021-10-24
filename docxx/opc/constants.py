@@ -653,6 +653,10 @@ class RELATIONSHIP_TYPE(object):
         'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
         '/webSettings'
     )
+    WORKSHEET = (
+        'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+        '/worksheet'
+    )
     WORKSHEET_SOURCE = (
         'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
         '/worksheetSource'

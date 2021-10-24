@@ -8,15 +8,18 @@ OpcPackage graph.
 
 from __future__ import absolute_import, division, print_function
 
+from typing import Generic, TypeVar
+
 import os
 
 from docxx.opc.constants import CONTENT_TYPE as CT
 from docxx.package import Package
 from docxx.element import copy_element, remove_element, query
+from docxx.parts.document import DocumentPart
 from copy import deepcopy
 
-
-class DocumentOpener:
+T = TypeVar("T")
+class DocumentOpener(Generic[T]):
     def __init__(self, content_type, file_type, template_file):
         self.content_type = content_type
         self.file_type = file_type
@@ -28,7 +31,7 @@ class DocumentOpener:
         """
         return self.template_file
         
-    def __call__(self, path=None):
+    def __call__(self, path=None) -> T:
         if path is None:    
             path = self.default_document_path()
             
@@ -44,7 +47,9 @@ def _templatefile(filename):
     thisdir = os.path.split(__file__)[0]
     return os.path.join(thisdir, 'templates', filename)
     
-open_docx = DocumentOpener(CT.WML_DOCUMENT_MAIN, "Word File", _templatefile("default.docx"))
+open_docx: DocumentOpener[DocumentPart] = DocumentOpener(
+    CT.WML_DOCUMENT_MAIN, "Word File", _templatefile("default.docx")
+)
 
 del _templatefile
 
