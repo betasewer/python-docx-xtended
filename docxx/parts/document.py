@@ -8,6 +8,8 @@ from docxx.document import Document
 from docxx.opc.constants import RELATIONSHIP_TYPE as RT
 from docxx.parts.hdrftr import FooterPart, HeaderPart
 from docxx.parts.numbering import NumberingPart
+from docxx.parts.comments import CommentsPart
+from docxx.comments import Comments
 from docxx.parts.settings import SettingsPart
 from docxx.parts.story import BaseStoryPart
 from docxx.parts.styles import StylesPart
@@ -66,11 +68,20 @@ class DocumentPart(BaseStoryPart):
             return None
             
     @property
-    def comments(self):
+    def comments(self) -> Comments:
         try:
             return self.part_related_by(RT.COMMENTS).comments
         except KeyError:
             return None
+
+    def use_comments(self) -> Comments:
+        """ コメントパートが存在しなければ新たに追加して返す。 """
+        comments = self.comments
+        if comments is None:
+            part = CommentsPart.new(self.package)
+            self.relate_to(part, RT.COMMENTS)
+            return part.comments
+        return comments
 
     def drop_header_part(self, rId):
         """Remove related header part identified by *rId*."""

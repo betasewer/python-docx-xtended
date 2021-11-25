@@ -268,7 +268,8 @@ def same_run(lrun, rrun):
         return lrun._element is rrun._element
 
 def clone_run(run, **kwargs):
-    r = deepcopy(run)
+    nelem = deepcopy(run.element)
+    r = Run(nelem, run._parent)
     for key, arg in kwargs.items():
         setattr(r, key, arg)
     return r

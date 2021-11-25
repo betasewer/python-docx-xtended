@@ -25,33 +25,45 @@ class CT_R(BaseOxmlElement):
     """
     ``<w:r>`` element, containing the properties and text for a run.
     """
-    rPr = ZeroOrOne('w:rPr')
-    t = ZeroOrMore('w:t')
-    br = ZeroOrMore('w:br')
-    cr = ZeroOrMore('w:cr')
-    tab = ZeroOrMore('w:tab')
-    ruby = ZeroOrMore('w:ruby')
+    _tag_seq = (
+        'w:br', 'w:t', 
+        'w:delText', 'w:instrText', 'w:delInstrText', 
+        'w:noBreakHyphen', 'w:softHyphen', 
+        'w:dayShort', 'w:monthShort', 'w:yearShort', 
+        'w:dayLong', 'w:monthLong', 'w:yearLong',  
+        'w:annotationRef', 'w:footnoteRef', 'w:endnoteRef', 
+        'w:separator', 'w:continuationSeparator', 
+        'w:sym', 'w:pgNum', 'w:cr', 'w:tab', 
+        'w:object', 'w:pict', 'w:fldChar', 'w:ruby', 
+        'w:footnoteReference', 'w:endnoteReference', 'w:commentReference',
+        'w:drawing', 'w:ptab', 'w:lastRenderedPageBreak'
+    )
+    rPr = ZeroOrOne('w:rPr', successors=_tag_seq)
+
+    br = ZeroOrMore('w:br', successors=_tag_seq[1:])
+    t = ZeroOrMore('w:t', successors=_tag_seq[2:])
+    delText = ZeroOrMore('w:delText', successors=_tag_seq[3:])
+    instrText = ZeroOrMore('w:instrText', successors=_tag_seq[4:])
+    delInstrText = ZeroOrMore('w:delInstrText', successors=_tag_seq[5:])
+    noBreakHyphen = ZeroOrMore('w:noBreakHyphen', successors=_tag_seq[6:])
+    softHyphen = ZeroOrOne('w:softHyphen', successors=_tag_seq[7:])
+    footnoteRef = ZeroOrMore('w:footnoteRef', successors=_tag_seq[15:])
+    endnoteRef = ZeroOrMore('w:endnoteRef', successors=_tag_seq[16:]) 
+    separator = ZeroOrOne('w:separator', successors=_tag_seq[17:])
+    continuationSeparator = ZeroOrOne('w:continuationSeparator', successors=_tag_seq[18:])
+    cr = ZeroOrMore('w:cr', successors=_tag_seq[21:])
+    tab = ZeroOrMore('w:tab', successors=_tag_seq[22:])
+    object = ZeroOrMore('w:object', successors=_tag_seq[23:])
+    pict = ZeroOrMore('w:pict', successors=_tag_seq[24:])
+    fldChar = ZeroOrMore('w:fldChar', successors=_tag_seq[25:])
+    ruby = ZeroOrMore('w:ruby', successors=_tag_seq[26:])    
+    footnoteReference = ZeroOrMore('w:footnoteReference', successors=_tag_seq[27:])
+    endnoteReference = ZeroOrMore('w:endnoteReference', successors=_tag_seq[28:])    
+    commentReference = ZeroOrMore('w:commentReference', successors=_tag_seq[29:])
+    drawing = ZeroOrMore('w:drawing', successors=_tag_seq[30:])
     
-    delText = ZeroOrMore('w:delText')
-    instrText = ZeroOrMore('w:instrText')
-    delInstrText = ZeroOrMore('w:delInstrText')
-    fldChar = ZeroOrMore('w:fldChar')
+    del _tag_seq
     
-    footnoteRef = ZeroOrMore('w:footnoteRef')
-    endnoteRef = ZeroOrMore('w:endnoteRef') 
-    footnoteReference = ZeroOrMore('w:footnoteReference')
-    endnoteReference = ZeroOrMore('w:endnoteReference')
-    
-    noBreakHyphen = ZeroOrMore('w:noBreakHyphen')
-    softHyphen = ZeroOrOne('w:softHyphen')
-    separator = ZeroOrOne('w:separator')
-    continuationSeparator = ZeroOrOne('w:continuationSeparator')
-    
-    drawing = ZeroOrMore('w:drawing')
-    pict = ZeroOrMore('w:pict')
-    object = ZeroOrMore('w:object')
-    
-    #
     #w:dayShort [0..1]    Date Block - Short Day Format
     #w:monthShort [0..1]    Date Block - Short Month Format
     #w:yearShort [0..1]    Date Block - Short Year Format
@@ -61,12 +73,8 @@ class CT_R(BaseOxmlElement):
     #w:annotationRef [0..1]    Comment Information Block
     #w:sym [0..1]    Symbol Character
     #w:pgNum [0..1]    Page Number Block
-    #w:object    Inline Embedded Object
-    #w:pict    VML Object
-    #w:commentReference    Comment Content Reference Mark
     #w:ptab [0..1]    Absolute Position Tab Character
     #w:lastRenderedPageBreak [0..1]    Position of Last Calculated Page Break
-    #
 
     def _insert_rPr(self, rPr):
         self.insert(0, rPr)
@@ -145,7 +153,7 @@ class CT_R(BaseOxmlElement):
     def set_text(self, text):
         for child in self:
             tag = child.tag
-            if any([ child.tag == qn(x) for x in ['w:t','w:tab','w:br','w:cr'] ]):
+            if any([tag == qn(x) for x in ['w:t','w:tab','w:br','w:cr']]):
                 self.remove(child)              
         _RunContentAppender.append_to_run_from_text(self, text)
 

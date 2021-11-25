@@ -259,6 +259,5 @@ def copy_part(srcp, destp, destpackage):
             newpart = type(srcpart)(srcpart.partname, srcpart.content_type, element, destpackage)
             # 名前はaddだが内部では代入している
             dest.rels.add_relationship(srcrel.reltype, newpart, srcrel.rId, srcrel.is_external)
-            if not srcrel.is_external:
-                _copy_rels(srcrel.target_part, newpart)
+            _copy_rels(srcrel.target_part, newpart)
     _copy_rels(srcp, destp)

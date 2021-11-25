@@ -35,7 +35,7 @@ def get_element(proxy_or_element):
         raise ValueError("No element related")
 
 # 要素の子を取り除く
-def remove_element(parent, if_=None, all=False):
+def remove_element(parent, if_=None):
     if parent is None:
         return False
     pa=get_element(parent)
@@ -46,8 +46,16 @@ def remove_element(parent, if_=None, all=False):
             rm=True
     return rm
 
+# 要素の子を選別しつつコピーする
+def clone_element(parent, if_=None):
+    pa=get_element(parent)
+    cpa=deepcopy(pa)
+    if if_ is not None:
+        remove_element(cpa, if_=if_.not_)
+    return cpa
+
 # 要素から子を取り除き、ほかの要素に追加する
-def move_element(destparent, parent, if_=None, copying=False):
+def insert_move_element(destparent, parent, if_=None, copying=False):
     if None in (parent, destparent):
         return False
     destparent = get_element(destparent)
@@ -58,7 +66,7 @@ def move_element(destparent, parent, if_=None, copying=False):
             destparent.append(child)
 
 # 元要素を残す
-def copy_element(destparent, parent, if_=None):
+def insert_copy_element(destparent, parent, if_=None):
     move_element(destparent, parent, if_, copying=True)
             
 # 子の中から要素を探す
@@ -69,6 +77,34 @@ def find_element(parent, if_=None):
         if if_ is None or if_(child):
             return child
     return None
+
+# 子の中から要素をすべて探す
+def find_all_element(parent, if_=None):
+    if parent is None:
+        return []
+    rets = []
+    for child in get_element(parent):
+        if if_ is None or if_(child):
+            rets.append(child)
+    return rets
+
+# 後ろに要素を追加する
+def insert_element_next(dest, src):
+    pt = get_element(dest)
+    parent = pt.getparent()
+    if parent is None:
+        raise ValueError("")
+    i = parent.index(pt)
+    parent.insert(i+1, get_element(src))
+    
+# 前方に要素を追加する
+def insert_element_prev(dest, src):
+    pt = get_element(dest)
+    parent = pt.getparent()
+    if parent is None:
+        raise ValueError("")
+    i = parent.index(pt)
+    parent.insert(i, get_element(src))
 
 #
 # 名前空間
@@ -208,20 +244,13 @@ class ElementChildren():
             destparent.append(child)
         return True
 
-        
-# 要素を複製して前方に挿入
-def dup_element_previous(obj):
-    elem = get_element(obj)
-    nelem = deepcopy(elem)
-    elem.addprevious(nelem)
-    return nelem
-
-# 要素を複製して後方に挿入
-def dup_element_next(obj):
-    elem = get_element(obj)
-    nelem = deepcopy(elem)
-    elem.addnext(nelem)
-    return nelem
+#
+def same_element(left, right):
+    if left is None or right is None:
+        return False
+    l = get_element(left)
+    r = get_element(right)
+    return l is r
 
 #
 #

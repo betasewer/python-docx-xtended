@@ -4,6 +4,7 @@
 RunsView, Runs
 """
 from typing import List, Optional, Any, Generator, Sequence, Tuple, List, Callable, Dict
+from docxx.element import insert_element_next, insert_element_prev
 from docxx.text.run import Run, same_run, clone_run
 
 #
@@ -230,39 +231,27 @@ class RunList():
     @property
     def end(self):
         return None
-        
-    #
-    # ある文字列を検索し、全体をその位置で再分割する
-    #  sep = separator, 文字列可
-    #  max = 分割回数
-    #  返り値： run, parts = (text, is-separator)
-    #
-    def runs_separations(self, sep: str, max=-1, range=None) -> Generator[Tuple[Run, List[Tuple[str, bool]]], None, None]:
-        range = range or self.range()                    
-        hitcnt = max
-        for run in self.runs(range.begin, range.end):
-            texts = run.text.split(sep, hitcnt)
-            hitcnt -= len(texts)-1            
-            if len(texts)==1:
-                yield run, []
-            else:
-                newparts = []
-                for t in texts:
-                    if len(t)>0:
-                        newparts.append((t, False))
-                    newparts.append((sep, True))
-                newparts.pop()
-                yield run, newparts
-    
+
     # 分割
-    def split(self, sep: str, max=-1, range=None) -> List[RunRange]:
+    def _split(self, splitter: Callable[[str, int], List[Tuple[str, bool]]], max=-1, range=None, reverse=False) -> List[RunRange]:        
+        """
+        Params:
+            splitter(str, int -> List[str]): 文字列と分割回数を受け取り分割したリストを返す
+            max(int): 分割回数
+        Returns:
+            List[RunRange]: 分割されたラン範囲のリスト
+        """
         range = range or self.range()
         runsspl: List[List[Run]] = [[]]
-        for run, newparts in self.runs_separations(sep, max, range):
-            if len(newparts)>0:
+        if reverse:
+            runitr = self.runs_reversed(range.begin, range.end)
+        else:
+            runitr = self.runs(range.begin, range.end)
+        for run, parts in _splitter_run(runitr, splitter, max):
+            if parts:
                 newrun = run
-                for runtext, issep in newparts:
-                    newrun = self.insert_run_next(newrun, clone_run(run, text=runtext))
+                for text, issep in parts:
+                    newrun = self.insert_run_next(newrun, clone_run(run, text=text))
                     if issep:
                         runsspl.append([])
                     else:
@@ -279,14 +268,42 @@ class RunList():
                 endrun = self.get_next_run(runlist[-1])
                 rets.append(self.range(runlist[0], endrun))
         return rets
-        
-    # splitのようにList[Run]のリストとせず、単にRunを区切ったリストにする。セパレータ文字も削除しない
-    def separate(self, sep: str, max=-1, range=None) -> List[Run]:
+
+    def split(self, separator: str, maxsplit: int = -1, range = None): 
+        """
+        分割文字を各ランで検索し、必要なら新たにランを分割して、分割された範囲で分けたリストを返す
+        Params:
+            separator(str|Callable[[str], bool]): 
+            max(int): 分割回数
+        Returns:
+            List[RunRange]:
+        """
+        return self._split(_char_splitter(separator), maxsplit, range)
+    
+    def rsplit(self, separator: str, maxsplit: int = -1, range = None): 
+        """
+        分割文字を右から検索し、必要なら新たにランを分割して、分割された範囲で分けたリストを返す
+        Params:
+            separator(str): 
+            max(int): 分割回数
+        Yields:
+            Tuple[Run, List[str]]: ランと分割文字列の組
+        """
+        return self._split(_reverse_char_splitter(separator), maxsplit, range, reverse=True)
+    
+    def _separate(self, splitter, max=-1, range=None, reverse=False) -> List[Run]:
+        """
+        """
+        range = range or self.range()
         runs = []
-        for run, newparts in self.runs_separations(sep, max, range):
-            if len(newparts)>0:
+        if reverse:
+            runitr = self.runs_reversed(range.begin, range.end)
+        else:
+            runitr = self.runs(range.begin, range.end)
+        for run, parts in _splitter_run(runitr, splitter, max):
+            if len(parts)>0:
                 newrun = run
-                for runtext, _ in newparts:
+                for runtext, _ in parts:
                     newrun = self.insert_run_next(newrun, clone_run(run, text=runtext))
                     runs.append(newrun)
                 self.remove(run)
@@ -294,8 +311,34 @@ class RunList():
                 runs.append(run)
         return runs
     
-    # 任意の値でランを区分けして返す
+    def separate(self, separator: str, maxsplit: int = -1, range = None): 
+        """
+        分割文字を各ランで検索し、必要なら新たにランを分割して、ランのリストを返す。
+        リストにはセパレータ文字のランも含まれる。
+        Params:
+            separator(str|Callable[[str], bool]):
+            max(int): 分割回数
+        Returns:
+            List[Run]:
+        """
+        return self._separate(_char_splitter(separator), maxsplit, range)
+    
+    def rseparate(self, separator: str, maxsplit: int = -1, range = None): 
+        """
+        分割文字を右から検索し、必要なら新たにランを分割して、ランのリストを返す。
+        リストにはセパレータ文字のランも含まれる。
+        Params:
+            separator(str|Callable[[str], bool]):
+            max(int): 分割回数
+        Returns:
+            List[Run]:
+        """
+        return self._separate(_reverse_char_splitter(separator), maxsplit, range, reverse=True)
+    
     def partitions(self, key: Callable[[Run], Any], range: RunRange=None) -> Generator[Tuple[Any, RunRange], None, None]:
+        """
+        任意の値でランを区分けして返す
+        """
         range = range or self.range()
         curbeg = range.begin
         keyval = None
@@ -306,53 +349,42 @@ class RunList():
                 curbeg = run
             keyval = curkeyval
         yield keyval, self.range(curbeg, range.end)
-    
-    def runs_separations_break(self, breaks: Sequence[Tuple[Run, int]]) -> Optional[RunRange]:
+
+    def run_split_separations(self, run, breaks: Sequence[int]) -> List[Run]:
         """
-        与えられた位置でランを区切って返す
+        与えられた位置でランを区切って返す。
         Params:
-            breaks(Sequence[Tuple[Run, Int]]): 区切り位置を示す[ラン、テキストインデックス]の組のリスト
+            breaks(Sequence[int]): 区切り位置を示すテキストインデックスのリスト
         Returns:
-            RunRange: 区切りが発生した範囲
+            List[Runs]: 新しいランのリスト
         """
-        runbreaks: Dict[int, Tuple[Run, List[int]]] = {}
-        for brkrun, brkpos in breaks:
-            key = id(brkrun)
-            if key not in runbreaks:
-                runbreaks[key] = (brkrun, [])
-            runbreaks[key][1].append(brkpos)
-        
         newruns: List[Run] = []
-        for brkrun, brkposlist in runbreaks.values():
-            text: str = brkrun.text
-            if not brkposlist:
-                continue
-            newtextfirst = text[0:brkposlist[0]]
 
-            # テキストを分割する
-            newtextothers: List[str] = []
-            lastpos = brkposlist[0]
-            for brkpos in brkposlist[1:]:
-                newtextothers.append(text[lastpos:brkpos])
-                lastpos = brkpos
-            newtextothers.append(text[lastpos:])
+        text: str = run.text
+        toptext = text[0:breaks[0]]
+        resttexts: List[str] = []
 
-            # 前のランのテキストを縮める
-            brkrun.text = newtextfirst
-            newruns.append(brkrun)
+        # テキストを分割する
+        lastpos = breaks[0]
+        for brkpos in breaks[1:]:
+            resttexts.append(text[lastpos:brkpos])
+            lastpos = brkpos
+        resttexts.append(text[lastpos:])
 
-            # 新しいランを後ろに追加する
-            ptrun = brkrun
-            for newtext in newtextothers:
-                newrun = clone_run(ptrun) # 前のランを複製
-                newrun.text = newtext
-                self.insert_run_next(ptrun, newrun)
-                newruns.append(newrun)
-                ptrun = newrun
+        # 先頭のランをテキストを縮めて再利用する
+        run.text = toptext
+        newruns.append(run)
 
-        if not newruns:
-            return None
-        return self.range(newruns[0], self.get_next_run(newruns[-1]))
+        # 新しいランを後ろに追加する
+        ptrun = run
+        for newtext in resttexts:
+            newrun = clone_run(ptrun) # 前のランを複製
+            newrun.text = newtext
+            self.insert_run_next(ptrun, newrun)
+            newruns.append(newrun)
+            ptrun = newrun
+
+        return newruns
 
     #
     # テキスト操作（複数ランにまたがっている場合に対応）
@@ -368,7 +400,6 @@ class RunList():
             if len(rng)==0:
                 continue            
             texthead = rng.text.find(s)
-            #print("head sch: ", tailrun.text, view.text, texthead)
             if texthead != -1:
                 break
         else:
@@ -385,9 +416,6 @@ class RunList():
                 h = texthead - doffset
             if doffset <= textend and e is None:
                 e = textend - doffset
-            #print("h index: ", h)
-            #print("e index: ", e)
-            #print("run text: ", headrun.text)
             offset = doffset
             if None not in (h, e):
                 break
@@ -419,11 +447,7 @@ class RunList():
         if ptrun is None:
             self._parent_elem.append(run._element)
         else:
-            parent = ptrun._element.getparent()
-            if parent is None:
-                raise ValueError("")
-            i = parent.index(ptrun._element)
-            parent.insert(i, run._element)
+            insert_element_prev(ptrun, run)
         return run
 
     # 指定ランの箇所にランを挿入する
@@ -431,11 +455,7 @@ class RunList():
         if ptrun is None:
             self._parent_elem.append(run._element)
         else:
-            parent = ptrun._element.getparent()
-            if parent is None:
-                raise ValueError("")
-            i = parent.index(ptrun._element)
-            parent.insert(i+1, run._element)
+            insert_element_next(ptrun, run)
         return run
 
     # ランを挿入し、新しいViewを返す
@@ -514,6 +534,53 @@ class RunList():
     @property
     def text(self):
         return self.range().text
+
+#
+# split
+#
+def _splitter_run(runs, splitter, maxsplit):
+    hitcnt = maxsplit
+    for run in runs:
+        if hitcnt == 0:
+            parts = []
+        else:
+            parts = splitter(run.text, hitcnt)
+            if hitcnt > 0:
+                hitcnt -= 1
+        yield ((run, parts))
+
+def _char_splitter(separator):
+    if isinstance(separator, str):
+        tester = lambda x: x == separator
+    else:
+        tester = separator
+    def splitter(text, max):
+        parts = []
+        cur = ""
+        count = 0
+        for ch in text:
+            if tester(ch) and (max == -1 or count < max):
+                if len(cur) > 0:
+                    parts.append((cur, False))
+                parts.append((ch, True))
+                cur = ""
+                count += 1
+            else:
+                cur += ch
+        if len(cur) > 0:
+            parts.append((cur, False))
+        return parts
+    return splitter
+
+def _reverse_char_splitter(separator):
+    splitter = _char_splitter(separator)
+    def rsplitter(text, max):
+        parts = splitter(reversed(text), max)
+        parts = [(x[::-1],i)  for x,i in parts]
+        parts.reverse()
+        return parts
+    return rsplitter
+
 
 #
 # API

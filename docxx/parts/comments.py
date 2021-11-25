@@ -22,7 +22,7 @@ class CommentsPart(XmlPart):
     Proxy for the endnotes.xml part
     """
     @classmethod
-    def default(cls, package):
+    def new(cls, package):
         """
         Return a newly created styles part, containing a default set of
         elements.
@@ -41,4 +41,9 @@ class CommentsPart(XmlPart):
         """
         Return a bytestream containing XML for a default styles part.
         """
-        return ""
+        path = os.path.join(
+            os.path.split(__file__)[0], '..', 'templates', 'default-comments.xml'
+        )
+        with open(path, 'rb') as f:
+            xml_bytes = f.read()
+        return xml_bytes

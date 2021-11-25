@@ -1,9 +1,278 @@
-
-from docxx import open_docx
+#!/usr/bin/env python3
+# coding: UTF-8
+#
 from machaon.types.file import BasicLoadFile
 
+from docxx import open_docx
+from docxx.element import ElementPrinter, docx_ns, find_element, query, get_element
+from docxx.opc.constants import RELATIONSHIP_TYPE, CONTENT_TYPE
 
-class DocxFile(BasicLoadFile):
+class OpcPart():
+    """ @type
+    docx.OpcPackage.Partを操作する
+    """
+    def __init__(self, part, srcrel=None):
+        self._part = part
+        self._srcrel = srcrel
+
+    def name(self):
+        """ @method
+        このパートの名前
+        Returns:
+            Str:
+        """
+        return self._part.partname
+
+    def content_type(self):
+        """ @method
+        このパートのContent Type
+        Returns:
+            Str:
+        """
+        return self._part.content_type
+
+    def content_typename(self):
+        """ @method
+        Content Typeの短縮版
+        Returns:
+            Str:
+        """
+        return CONTENT_TYPE.short_content_type(self._part.content_type)
+
+    def element(self):
+        """ @method
+        中に入っているXMLの要素にアクセスする。
+        Returns:
+            XmlElement: 
+        """
+        if not self.is_xml_part():
+            raise ValueError("Xmlの要素ではありません")
+        root = get_element(self._part)
+        return root
+    
+    def is_xml_part(self):
+        return hasattr(self._part, "element")
+
+    def save(self, app, outpath):
+        """ @task
+        ファイルに保存する。
+        Params:
+            outpath(Path): 
+        """
+        if outpath.isdir():
+            outpath = outpath / (self.name().filename)
+        
+        if self.is_xml_part():
+            import lxml.etree as etree
+            elem = self.element()
+            sb = etree.tostring(elem, pretty_print=True)
+            with open(outpath, "wb") as fo:
+                fo.write(sb)
+        else:
+            with open(outpath, "wb") as fo:
+                fo.write(self._part.blob)
+    
+    def part(self, path):
+        """ @method
+        パスで指定した関係するパーツを取り出す。
+        Params:
+            path(str): 名前／[type=XXX]でrelation-typeによる検索／[id=XXX]でrelation-idによる検索
+        Returns:
+            OpcPart:
+        """
+        return next(_filter_parts(self._part.package, self._part.rels, path), None)
+
+    def parts(self):
+        """ @method
+        関係するすべてのパーツをリストアップする。
+        Returns:
+            Sheet[OpcPart](name, source_relation_id, source_relation_typename):
+        """
+        return list(_list_parts(self._part.rels))
+
+    def source_relation(self):
+        """ @method
+        このパーツを取得した親との関係。
+        Returns:
+            Any:
+        """
+        if self._srcrel is None:
+            raise ValueError("パーツ取得者の情報がありません")
+        return self._srcrel
+    
+    def source_relation_id(self):
+        """ @method
+        このパーツを取得した親との関係を特定するID。
+        Returns:
+            Str:
+        """
+        if self._srcrel is None:
+            raise ValueError("パーツ取得者の情報がありません")
+        return self._srcrel.rId
+
+    def source_relation_typename(self):
+        """ @method
+        このパーツを取得した親との関係のタイプ。
+        Returns:
+            Str:
+        """
+        return RELATIONSHIP_TYPE.short_relation_type(self._srcrel.reltype)
+
+    def construct(self, context, v):
+        """ @meta
+        """
+        return OpcPart(v)
+
+#
+def _filter_parts(package, rels, xpath):
+    """
+    条件にあてはまるすべてのパーツを返す
+    Params:
+        xpath(str): 名前（前方一致）
+            | 'type=XXX'でrelation-typeによる検索
+            | 'id=XXX'でrelation-idによる検索
+    """
+    valtype, sep, value = xpath.partition("=")
+    if sep:
+        t = valtype.strip().upper()
+        v = value.strip()
+        return _list_part_by_relation(rels, t, v)
+    else:
+        if not xpath.startswith("/"):
+            raise ValueError("パーツ名は/から開始します")
+        for part in package.iter_parts():
+            if part.partname.startswith(xpath):
+                yield OpcPart(part)
+
+def _list_part_by_relation(rels, t, v):
+    if t == "TYPE":
+        name = v.upper()
+        reltype = getattr(RELATIONSHIP_TYPE, name, None)
+        if reltype is None:
+            raise ValueError("'{}'は存在しないRELATION_TYPEです".format(name))
+        def predicate(x):
+            return x.reltype == reltype
+    elif t == "ID":
+        def predicate(x):
+            return x.rId == v
+    else:
+        raise ValueError("不明な検索タイプです")
+
+    for rel in rels.values():
+        if predicate(rel):
+            yield OpcPart(rel.target_part, rel)
+
+def _list_parts(rels):
+    ps = []
+    def _tryint(x):
+        try: return int(x)
+        except: return x
+    for k, rel in sorted(rels.items(), key=lambda x:(x[0:3],_tryint(x[3:]))): # relIdでソートする
+        ps.append(OpcPart(rel.target_part, rel))
+    return ps
+
+def package_filter_parts(pkg, xpath):
+    """ パッケージのルートを基準にパスでパーツを示す。 """
+    return _filter_parts(pkg, pkg.rels, xpath)
+
+
+class OpcPackageFile(BasicLoadFile):
+    def package(self):
+        """ @method
+        パッケージを得る。
+        Returns:
+            OpcPackageView
+        """
+        return self.file.package
+    
+    def part(self, path):
+        """ @method
+        opcパッケージのパートを得る。
+        Params:
+            path(str):
+        Returns:
+            OpcPart:
+        """
+        return next(package_filter_parts(self.package(), path), None)
+
+    def walk_parts(self, path=None):
+        """ @method
+        含まれる全てのパートを得る。
+        Returns:
+            Sheet[OpcPart](name, content_typename):
+        """
+        if path is None:
+            itr = self.package().iter_parts()
+        else:
+            itr = package_filter_parts(self.package(), path)
+        return [OpcPart(x) for x in itr]
+
+
+class XmlElement():
+    """ @type trait
+    lxml.etree.Elementを操作する。
+    """
+    class SpiritPrinter(ElementPrinter):
+        def __init__(self, app):
+            super().__init__(docx_ns)
+            self.app = app
+
+        def printer(self, s):
+            self.app.post("message", s)
+            
+        def interrupted(self):
+            return self.app.interruption_point()
+
+    def xpath(self, elem, context, path):
+        """ @method context
+        XPathで子要素にアクセスする。
+        Params:
+            path(str): XPath
+        Returns:
+            Tuple: 
+        """
+        elems = elem.xpath(path) # docxx.oxml.xmlchemy._OxmlElementBase.xpathでnamespaceが渡される
+        return [context.new_object(x, type=self) for x in elems]
+
+    def children(self, elem, context):
+        """ @method context
+        すべての子要素を得る。
+        Returns:
+            Tuple: 
+        """
+        return [context.new_object(ch, type=self) for ch in elem]
+    
+    def first_child(self, elem, *tagnames):
+        """ @method
+        最初の要素を得る。
+        Params:
+            *tagnames(str):
+        Returns:
+            XmlElement:
+        """
+        el = elem.first_child_found_in(*tagnames)
+        if el is None:
+            raise ValueError("要素が見つかりません")
+        return el
+    
+    def xml(self, elem):
+        """ @method
+        XMLを得る。
+        Returns:
+            Str:
+        """
+        return elem.xml
+
+    def pprint(self, app, element):
+        """ @meta """
+        p = XmlElement.SpiritPrinter(app)
+        p(element)
+    
+
+#
+#
+#
+class DocxFile(OpcPackageFile):
     """ @type
     ワードファイル。
     """
@@ -57,14 +326,6 @@ class DocxFile(BasicLoadFile):
             DocxFile:
         """
         raise NotImplementedError()
-
-    def package(self):
-        """ @method
-        パッケージを得る。
-        Returns:
-            OpcPackageView
-        """
-        return self.file.package
     
     def pprint(self, app):
         """ @meta """

@@ -4,10 +4,9 @@ import os
 from lxml import etree
 from docxx.shared import ElementProxy, Parented
 from docxx.element import (
-    get_element, remove_element, move_element, copy_element, 
-    find_element, match_element, query, dup_element_previous, dup_element_next,
-    namespaces,
-    ElementPrinter, print_element
+    find_all_element, get_element, remove_element, move_element, 
+    find_element, match_element, query, clone_element,
+    print_element
 )
 
 @pytest.fixture
@@ -78,22 +77,13 @@ def test_x_findelement(testtree):
 def test_x_copyelement(testtree):
     from docxx.oxml.ns import qn, nsmap
     root2 = etree.Element(qn("w:body"))
-    copy_element(root2, testtree, query("w:p"))
+    p = clone_element(find_element(testtree, query("w:p")))
+    root2.append(p)
     move_element(root2, testtree, query("w:section"))
     assert len(root2.find("w:p", nsmap)) == 3
     assert find_element(root2.find("w:section", nsmap), query("w:grid", x="20")) is not None
     assert len(testtree.find("w:p", nsmap)) == 3
     assert find_element(testtree, query("w:section")) is None
-
-def test_x_dupelement(testtree):
-    from docxx.oxml.ns import nsmap
-    elem = find_element(testtree.find("w:p", nsmap), query("w:r"))
-    assert elem is not None
-    elem4 = dup_element_next(elem)
-    elem4.text = "Onion"
-    elem5 = dup_element_previous(elem)
-    elem5.text = "Tomato"
-    assert [x.text for x in testtree.find("w:p", nsmap)] == ["Tomato", "Apple", "Onion", "Banana", "Orange"]
 
 def test_x_namespaces():
     from docxx.oxml.ns import qn
@@ -103,3 +93,24 @@ def test_x_namespaces():
 
 def test_x_elementprint(testtree):
     print_element(ElemProxy(testtree))
+
+#
+#
+#
+def test_x_clonerun():
+    right = r'''
+    <w:r xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+        <w:rPr>
+            <w:rFonts w:eastAsia="ＭＳ Ｐ明朝"/>
+            <w:lang w:val="ru-RU"/>
+        </w:rPr>	
+        <w:t>『同時代の哲学的実在論』と『その経験哲学』</w:t>
+        <w:endnoteReference w:id="1"/>
+    </w:r>'''
+    rt = etree.fromstring(right.strip())
+    ct = clone_element(rt, if_=query("w:rPr", "w:t"))
+    assert find_element(rt, if_=query("w:endnoteReference")) is not None
+    assert find_element(ct, if_=query("w:endnoteReference")) is None
+    assert len(find_all_element(ct, if_=query("w:rPr"))) == 1
+    assert len(find_all_element(ct, if_=query("w:t"))) == 1
+

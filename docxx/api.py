@@ -14,7 +14,7 @@ import os
 
 from docxx.opc.constants import CONTENT_TYPE as CT
 from docxx.package import Package
-from docxx.element import copy_element, remove_element, query
+from docxx.element import remove_element, query, insert_copy_element
 from docxx.parts.document import DocumentPart
 from copy import deepcopy
 
@@ -72,13 +72,15 @@ def compose_docx(base=None, template=None):
         remove_element(newbody, query("w:sectPr"))
         srcsection = templbody.get_or_add_sectPr()
         destsection = newbody.get_or_add_sectPr()
-        copy_element(destsection, srcsection, query(
+        elements = query(
             "w:pgSz", 
             "w:pgMar", 
             "w:cols", 
             "w:textDirection", 
             "w:docGrid"
-        ))
+        )
+        remove_element(destsection, elements)
+        insert_copy_element(destsection, srcsection, elements)
         # TODO: テンプレート文書からヘッダー・フッターをコピーする。
     else:
         """

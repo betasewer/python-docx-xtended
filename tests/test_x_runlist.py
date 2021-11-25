@@ -1,21 +1,48 @@
-
+from docxx.document import Document
+from docxx.text.paragraph import Paragraph
 from docxx.text.run import Run, same_run
 from docxx.text.runlist import RunList, RunRange, runlist
 from docxx.element import print_element
+from docxx.oxml import parse_xml
 from docxx import open_docx
 
 import pytest
 
 @pytest.fixture
 def newp():
-    doc = open_docx()
-    p = doc.document.add_paragraph()
-    return p
+    xml = r'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    <w:document xmlns:o="urn:schemas-microsoft-com:office:office" 
+        xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" 
+        xmlns:v="urn:schemas-microsoft-com:vml" 
+        xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" 
+        xmlns:w10="urn:schemas-microsoft-com:office:word" 
+        xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" 
+        xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" 
+        xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" 
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+        xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" 
+        xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" 
+        mc:Ignorable="w14 wp14">
+    <w:body>
+        <w:p>
+            <w:pPr>
+                <w:rPr></w:rPr>
+            </w:pPr>
+        </w:p>
+    </w:body>
+    </w:document>
+    '''.encode("utf-8")
+    d = parse_xml(xml)
+    doc = Document(d, None)
+    return doc.paragraphs[0]
 
 @pytest.fixture
 def newruns(newp):
     return runlist(newp)
     
+def ranges_to_texts(ranges):
+    return sum([[x.text for x in x.runs()] for x in ranges], [])
+
 #
 #
 #
@@ -39,7 +66,6 @@ def test_x_runs_getruns(newruns):
     assert len(li2) == 1
     assert same_run(li2[0], li[0])
 
-   
 def test_x_make_view(newruns):
     # 空のrange
     emp = newruns.range(newruns[0], newruns[0])
@@ -105,15 +131,26 @@ def textruns(newruns):
     return (newruns, texts, splittexts)
 
 def test_x_runs_split(textruns):
-    newruns, texts, spl = textruns
-    rs = newruns.split("、", -1)
-    runs = sum([list(x.runs()) for x in rs], [])
-    for run, data in zip(runs, [x for x in spl if x != "、"]):
-        assert run.text == data
+    newruns, _texts, _results = textruns
+    rs = newruns.split("、")
+    runs = ranges_to_texts(rs)
+    assert runs == ["私は","明日の午後に","目覚め","そして","バナナの","種を","植えます","。"]
+    
+def test_x_runs_split_max(textruns):
+    newruns, _texts, _results = textruns
+    rs = newruns.split("、", 2)
+    runs = ranges_to_texts(rs)
+    assert runs == ["私は","明日の午後に", "、", "目覚め、そして","バナナの、種を、植えます", "。"]
+
+def test_x_runs_rsplit_max(textruns):
+    newruns, _texts, _results = textruns
+    rs = newruns.rsplit("、", 2)
+    runs = ranges_to_texts(rs)
+    assert runs == ["私は、","明日の午後に", "、", "目覚め、そして","バナナの、種を、植えます", "。"]
 
 def test_x_runs_separate(textruns):
     newruns, texts, spl = textruns
-    rs = newruns.separate("、", -1)
+    rs = newruns.separate("、")
     for run, data in zip(rs, spl):
         assert run.text == data
 
@@ -130,6 +167,25 @@ def test_x_runs_partitions(textpartitions):
     newruns, fn, parts = textpartitions
     for (keyval, range), part in zip(newruns.partitions(fn), parts):
         assert range.text == part
+
+#
+def test_x_run_split_separations(newruns):
+    newruns.insert(newruns.end, "AAA-BBB-CCC-DDD")
+    assert newruns.text == "AAA-BBB-CCC-DDD"
+
+    run = newruns.tail
+    breaks = []
+    for pos, t in enumerate(run.text):
+        if t == "-":
+            breaks.append(pos)
+            breaks.append(pos+1)
+
+    texts = []
+    for run in newruns.run_split_separations(run, breaks):
+        texts.append(run.text)
+    
+    assert texts == ["AAA", "-", "BBB", "-", "CCC", "-", "DDD"]
+
 
 #
 @pytest.fixture(params=[

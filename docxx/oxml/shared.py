@@ -59,4 +59,12 @@ class CT_MarkupRange(BaseOxmlElement):
     
 class CT_Markup(BaseOxmlElement):
     id = RequiredAttribute('w:id', ST_DecimalNumber)
-    
+
+
+class CT_Bookmark(BaseOxmlElement):
+    id = RequiredAttribute('w:id', ST_DecimalNumber)
+    colFirst = OptionalAttribute('w:colFirst', ST_DecimalNumber)
+    colLast = OptionalAttribute('w:colLast', ST_DecimalNumber)
+    name = RequiredAttribute('w:name', ST_String)
+
+

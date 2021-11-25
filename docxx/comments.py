@@ -15,7 +15,19 @@ class Comments(ElementProxy):
     @property
     def comments(self):
         return [Comment(n, self) for n in self._element.comment_lst]
-        
+    
+    def add(self):
+        # IDを発行
+        if len(self._element.comment_lst) > 0:
+            nid = self._element.comment_lst[-1].id + 1
+        else:
+            nid = 0
+        # 要素を追加し初期化する
+        cmt = self._element._add_comment()
+        cmt.id = nid
+        cmt.author = "machine"
+        comment = Comment(cmt, self)
+        return comment
         
 class Comment(ElementProxy):    
     def __init__(self, r, parent):
@@ -31,8 +43,17 @@ class Comment(ElementProxy):
         return self._comment.paragraphs
 
     @property
-    def texts(self):
-        return [ p.text for p in self.paragraphs ]
+    def lines(self):
+        return [p.text for p in self.paragraphs]
+
+    @property
+    def text(self):
+        return "\n".join(self.lines)
+    
+    @text.setter
+    def text(self, text):
+        for line in text.splitlines():
+            self._comment.add_paragraph(line)
         
     @property
     def _comment(self):

@@ -9,10 +9,11 @@ from __future__ import (
 )
 
 from docxx.enum.style import WD_STYLE_TYPE
-from docxx.text.parfmt import ParagraphFormat
-from docxx.text.run import Run
-from docxx.text.hyperlink import Hyperlink
+from docxx.text.run import Run, same_run
 from docxx.shared import Parented
+from docxx.element import insert_element_next, insert_element_prev, same_element
+from docxx.text.parfmt import ParagraphFormat
+from docxx.text.hyperlink import Hyperlink
 
 
 class Paragraph(Parented):
@@ -39,6 +40,51 @@ class Paragraph(Parented):
         if style:
             run.style = style
         return run
+
+    def add_comment(self, text, headrun, tailrun):
+        """
+        文書に新しいコメントを挿入する。
+        Params:
+            text(str):
+            headrun(Optional[Run]):
+            tailrun(Optional[Run]):
+        """
+        comment = self.part.use_comments().add()
+        if text:
+            comment.text = text
+        
+        comment_beg = self._element._add_commentRangeStart()
+        comment_beg.id = comment.id
+        comment_end = self._element._add_commentRangeEnd()
+        comment_end.id = comment.id
+        for (_ct, run) in self.paragraph_contents:
+            if same_element(run, headrun):
+                insert_element_prev(run, comment_beg)
+            if same_element(run, tailrun):
+                insert_element_next(run, comment_end)
+                break
+        
+        comment_refrun = self._element.add_r()
+        comref = comment_refrun._add_commentReference()
+        comref.id = comment.id
+        insert_element_next(tailrun, comment_refrun)
+
+        return comment
+
+    def add_bookmark(self, id, headrun, tailrun, name):
+        """  """
+        beg = self._element._add_bookmarkStart()
+        beg.id = id
+        beg.name = name
+        end = self._element._add_bookmarkEnd()
+        end.id = id
+        for (_ct, run) in self.paragraph_contents:
+            if same_element(run, headrun):
+                insert_element_prev(run, beg)
+            if same_element(run, tailrun):
+                insert_element_next(run, end)
+                break        
+        return end
 
     @property
     def alignment(self):
@@ -148,11 +194,11 @@ class Paragraph(Parented):
     @property
     def paragraph_contents(self):    
         for child in self._element:
-            ct = ParagraphContentType(child.tag) # local_part
+            ct = ContentType.find(child.tag) # local_part
             co = None
-            if ct == "run":
+            if ct is CONTENT_TYPE_RUN:
                 co = Run(child, self)
-            elif ct == "hyperlink":
+            elif ct is CONTENT_TYPE_HYPERLINK:
                 co = Hyperlink(child, self)
             else:
                 co = child
@@ -170,46 +216,35 @@ class Paragraph(Parented):
 #
 #
 #
-class ParagraphContentType(object):
-    _content_names = []
-    _names_map = {}
+class ContentType:
+    _tag_map = {}
 
-    def __init__(self, tagstr):
-        _, localp = tagstr.split("}")
-        self.type = type(self).GetTypeCode(localp)
-        
+    def __init__(self, tag):
+        self.tag = tag
+
+    @classmethod
+    def define(cls, *tags):
+        c = cls(tags[-1])
+        cls._tag_map[tags[0]] = c
+        return c
+
+    @classmethod
+    def find(cls, tag):
+        _, localp = tag.split("}")
+        if localp in cls._tag_map:
+            return cls._tag_map[localp]
+        else:
+            return ContentType(localp)
+
     def __eq__(self, right):
-        if isinstance(right, str):
-            typecode = type(self)._names_map[right]
-        elif isinstance(right, int):
-            typecode = right
-        else:
-            raise ValueError(right)
-        return self.type == typecode
-        
-    def is_others(self):
-        return self.type is None
-            
-    @classmethod
-    def GetTypeCode(cls, name):
-        if name in cls._content_names:
-            return cls._content_names.index(name)
-        else:
-            return None
-        
-    @classmethod
-    def Define(cls, *entries):
-        for names in entries:
-            tagname = names[0]
-            typecode = len(cls._content_names)
-            cls._content_names.append(tagname)
-            for name in names:
-                cls._names_map[name] = typecode
-    
-ParagraphContentType.Define(
-    ("r", "run"),
-    ("commentRangeStart",),
-    ("commentRangeEnd",),
-    ("hyperlink",)
-)
-delattr(ParagraphContentType, "Define")
+        if not isinstance(right, str):
+            raise TypeError(right)
+        return self.tag == right
+
+
+CONTENT_TYPE_RUN            = ContentType.define("r", "run")
+CONTENT_TYPE_COMMENT_BEGIN  = ContentType.define("commentRangeStart")
+CONTENT_TYPE_COMMENT_END    = ContentType.define("commentRangeEnd")
+CONTENT_TYPE_HYPERLINK      = ContentType.define("hyperlink")
+CONTENT_TYPE_BOOKMARK_BEGIN = ContentType.define("bookmarkStart")
+CONTENT_TYPE_BOOKMARK_END   = ContentType.define("bookmarkEnd")

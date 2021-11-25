@@ -6,19 +6,21 @@ Custom element classes related to paragraphs (CT_P).
 
 from docxx.oxml.ns import qn
 from docxx.oxml.xmlchemy import BaseOxmlElement, OxmlElement, ZeroOrMore, ZeroOrOne
-from docxx.element import copy_element
 
 class CT_P(BaseOxmlElement):
     """
     ``<w:p>`` element, containing the properties and text for a paragraph.
     """
     content_tags = (
-        'w:r', 'w:commentRangeStart', 'w:commentRangeEnd', 'w:hyperlink'
+        'w:r', 'w:commentRangeStart', 'w:commentRangeEnd', 
+        'w:bookmarkStart', 'w:bookmarkEnd','w:hyperlink'
     )
     pPr = ZeroOrOne('w:pPr')
     r = ZeroOrMore('w:r')
     commentRangeStart = ZeroOrMore('w:commentRangeStart')
     commentRangeEnd = ZeroOrMore('w:commentRangeEnd')
+    bookmarkStart = ZeroOrMore('w:bookmarkStart')
+    bookmarkEnd = ZeroOrMore('w:bookmarkEnd')
     hyperlink = ZeroOrMore('w:hyperlink')
 
     def _insert_pPr(self, pPr):
@@ -91,10 +93,5 @@ class CT_P(BaseOxmlElement):
         return -1
     
     def new_run(self):
-        r = self._new_r()
-        # rPr, tの順にしないと「壊れたファイル」としてエラーになる
-        pPr = self.pPr
-        if pPr is not None:
-            copy_element(r, pPr, query_tag("w:rPr"))
-        return r
+        return self._new_r()
 

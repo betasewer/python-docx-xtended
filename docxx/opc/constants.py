@@ -5,6 +5,14 @@ Constant values related to the Open Packaging Convention, in particular,
 content types and relationship types.
 """
 
+def _short_name(prefixes, name):
+    """ 省略表記を作る """
+    for prefix, shortname in prefixes:
+        pos = name.find(prefix)
+        if pos == 0:
+            return "[{}]".format(shortname) + name[len(prefix):]
+    return name
+
 
 class CONTENT_TYPE(object):
     """
@@ -341,6 +349,20 @@ class CONTENT_TYPE(object):
         'image/x-wmf'
     )
 
+    _shortnames = [
+        ("application/vnd.openxmlformats-officedocument.wordprocessingml", "office.word"),
+        ("application/vnd.openxmlformats-officedocument.spreadsheetml", "office.spreadsheet"),
+        ("application/vnd.openxmlformats-officedocument.presentationml", "office.presentation"),
+        ("application/vnd.openxmlformats-officedocument.drawingnml", "office.drawing"),
+        ("application/vnd.openxmlformats-officedocument", "office"),
+        ("application/vnd.openxmlformats-package", "opcpackage"),
+    ]
+    @classmethod
+    def short_content_type(cls, name):
+        """ CONTENT_TYPEの先頭の共通部分を省略する """
+        return _short_name(cls._shortnames, name)
+
+
 
 class NAMESPACE(object):
     """Constant values for OPC XML namespaces"""
@@ -665,3 +687,13 @@ class RELATIONSHIP_TYPE(object):
         'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
         '/xmlMaps'
     )
+
+    _shortnames = [
+        ("http://schemas.openxmlformats.org/officeDocument/2006/relationships", "document"),
+        ("http://schemas.openxmlformats.org/package/2006/relationships", "package")
+    ]
+
+    @classmethod
+    def short_relation_type(cls, name):
+        """ RELATION_TYPEの先頭の共通部分を省略する """
+        return _short_name(cls._shortnames, name)

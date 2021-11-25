@@ -79,6 +79,7 @@ from .shared import (
     CT_Markup, 
     CT_OnOff, 
     CT_String, 
+    CT_Bookmark,
 )
 register_element_cls("w:evenAndOddHeaders", CT_OnOff)
 register_element_cls("w:titlePg", CT_OnOff)
@@ -253,6 +254,10 @@ register_element_cls('w:webHidden',  CT_OnOff)
 
 from .text.paragraph import CT_P  # noqa
 register_element_cls('w:p', CT_P)
+register_element_cls('w:bookmarkStart',         CT_Bookmark)
+register_element_cls('w:bookmarkEnd',           CT_MarkupRange)
+register_element_cls('w:commentRangeStart',     CT_MarkupRange)
+register_element_cls('w:commentRangeEnd',       CT_MarkupRange)
 
 from .text.parfmt import (  # noqa
     CT_Hyperlink,
@@ -329,8 +334,6 @@ from .comments import (
 )
 register_element_cls('w:comments',    CT_Comments)
 register_element_cls('w:comment',     CT_Comment)
-register_element_cls('w:commentRangeStart',     CT_MarkupRange)
-register_element_cls('w:commentRangeEnd',       CT_MarkupRange)
-register_element_cls('w:commentReference',      CT_Markup)
+register_element_cls('w:commentReference', CT_Markup)
 
 
