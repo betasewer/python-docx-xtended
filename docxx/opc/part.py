@@ -261,3 +261,5 @@ def copy_part(srcp, destp, destpackage):
             dest.rels.add_relationship(srcrel.reltype, newpart, srcrel.rId, srcrel.is_external)
             _copy_rels(srcrel.target_part, newpart)
     _copy_rels(srcp, destp)
+
+

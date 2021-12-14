@@ -184,6 +184,13 @@ class OpcPackage(object):
             self.relate_to(core_properties_part, RT.CORE_PROPERTIES)
             return core_properties_part
 
+    def clone(self):
+        """ パッケージを複製する。 """
+        from docxx.opc.part import copy_part
+        pkg = type(self)()
+        copy_part(self, pkg, pkg)
+        return pkg
+
 
 class Unmarshaller(object):
     """Hosts static methods for unmarshalling a package from a |PackageReader|."""
@@ -229,3 +236,4 @@ class Unmarshaller(object):
             target = (srel.target_ref if srel.is_external
                       else parts[srel.target_partname])
             source.load_rel(srel.reltype, target, srel.rId, srel.is_external)
+

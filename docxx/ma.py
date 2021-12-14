@@ -207,6 +207,11 @@ class OpcPackageFile(BasicLoadFile):
             itr = package_filter_parts(self.package(), path)
         return [OpcPart(x) for x in itr]
 
+    def clone(self, path):
+        """ パッケージを複製する。 """
+        pkg = self.package().clone()
+        return type(self)(path, file=pkg.main_document_part)
+
 
 class XmlElement():
     """ @type trait

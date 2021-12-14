@@ -184,3 +184,5 @@ class DocumentPart(BaseStoryPart):
             styles_part = StylesPart.default(self.package)
             self.relate_to(styles_part, RT.STYLES)
             return styles_part
+
+    
