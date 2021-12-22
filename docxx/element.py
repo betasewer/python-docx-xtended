@@ -67,7 +67,7 @@ def insert_move_element(destparent, parent, if_=None, copying=False):
 
 # 元要素を残す
 def insert_copy_element(destparent, parent, if_=None):
-    move_element(destparent, parent, if_, copying=True)
+    insert_move_element(destparent, parent, if_, copying=True)
             
 # 子の中から要素を探す
 def find_element(parent, if_=None):
