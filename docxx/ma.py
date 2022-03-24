@@ -367,9 +367,9 @@ class DocxFile(OpcPackageFile):
         marf = mm(sect1.footer_distance)
         marg = mm(sect1.gutter)
         app.post("message", "page margin：")
-        app.post("message", "　　　　{} [header:{}] 　".format(mart, marh))
-        app.post("message", "　{}　　　　{}".format(marr, marl))
-        app.post("message", "　　　　{} [footer:{}]　 ".format(marb, marf))
+        app.post("message", "    {} [header:{}] ".format(mart, marh))
+        app.post("message", " {}    {}".format(marr, marl))
+        app.post("message", "    {} [footer:{}] ".format(marb, marf))
         app.post("message", "")
 
         gridtype = sect1.grid_type

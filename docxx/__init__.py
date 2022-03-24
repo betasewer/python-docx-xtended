@@ -1,4 +1,8 @@
 # encoding: utf-8
+""" @module
+DefModules:
+    docxx.ma
+"""
 
 from docxx.api import open_docx, compose_docx  # noqa
 
