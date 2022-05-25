@@ -177,6 +177,10 @@ def package_filter_parts(pkg, xpath):
 
 
 class OpcPackageFile(BasicLoadFile):
+    def spawn(self):
+        """ """
+        return type(self).new(self._path)
+
     def package(self):
         """ @method
         パッケージを得る。
@@ -281,6 +285,10 @@ class DocxFile(OpcPackageFile):
     """ @type
     ワードファイル。
     """
+    @classmethod
+    def new(cls, path):
+        return cls(path, file=open_docx())
+    
     def loadfile(self):
         return open_docx(self.pathstr)
 
