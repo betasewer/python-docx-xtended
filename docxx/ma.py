@@ -7,7 +7,7 @@ from docxx import open_docx
 from docxx.element import ElementPrinter, docx_ns, find_element, query, get_element
 from docxx.opc.constants import RELATIONSHIP_TYPE, CONTENT_TYPE
 
-class OpcPart():
+class OpcPart:
     """ @type
     docx.OpcPackage.Partを操作する
     """
@@ -185,7 +185,7 @@ class OpcPackageFile(BasicLoadFile):
         """ @method
         パッケージを得る。
         Returns:
-            OpcPackageView
+            Any: OpcPackageView
         """
         return self.file.package
     
@@ -203,7 +203,9 @@ class OpcPackageFile(BasicLoadFile):
         """ @method
         含まれる全てのパートを得る。
         Returns:
-            Sheet[OpcPart](name, content_typename):
+            Sheet[OpcPart]:
+        Deco:
+            @ view: name content_typename
         """
         if path is None:
             itr = self.package().iter_parts()
@@ -217,7 +219,7 @@ class OpcPackageFile(BasicLoadFile):
         return type(self)(path, file=pkg.main_document_part)
 
 
-class XmlElement():
+class XmlElement:
     """ @type trait
     lxml.etree.Elementを操作する。
     """
